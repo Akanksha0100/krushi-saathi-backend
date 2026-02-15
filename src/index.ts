@@ -21,18 +21,27 @@ app.use(express.json());
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Database connection
+let dbConnected = false;
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/krushi-saathi");
+    await mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/krushi-saathi", {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
+    });
+    dbConnected = true;
     console.log("✓ MongoDB connected");
   } catch (error) {
-    console.error("✗ MongoDB connection failed:", error);
-    process.exit(1);
+    dbConnected = false;
+    console.warn("⚠ MongoDB connection failed - continuing with mock data");
+    console.warn("⚠ All data will be stored in memory and lost on server restart");
   }
 };
 
 // Initialize DB
 connectDB();
+
+// Export DB status for controllers
+export const isDBConnected = () => dbConnected;
 
 // Routes
 app.use("/v1/auth", authRoutes);
